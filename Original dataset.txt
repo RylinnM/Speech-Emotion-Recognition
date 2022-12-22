@@ -1,0 +1,2 @@
+# The original RAVDESS dataset can be accessed and downloaded through this link:
+https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio
