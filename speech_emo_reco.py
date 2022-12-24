@@ -220,7 +220,7 @@ def get_the_X(file_name_list):
         arr.append(img)
     X = np.array(arr)
     return X
-
+#may take 30 seconds :)
 x_train = get_the_X(x_train_filename)
 x_test = get_the_X(x_test_filename)
 print(x_train.shape)
