@@ -49,7 +49,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 ## File loading
 """
 
-dataset_dir = "/content/drive/MyDrive/archive"
+dataset_dir = "/content/drive/MyDrive/archive" # change to your local path when excecuting
 dataset_dir_list = os.listdir(dataset_dir)
 
 emotion = []
@@ -136,10 +136,15 @@ def normalization(y,n_len):
 
 """Create the MFCC images"""
 
+emo_list = emotion_df.values.tolist()
 for i in np.unique(emo_list):
-    figure_save_path = "ravd/"+ i
+    figure_save_path = "ravd/"+ i # The path to access to each dataset files, you can change it to your own path :)
     if not os.path.exists(figure_save_path):
         os.makedirs(figure_save_path)
+
+"""### !!!Attention!!!
+This may takes you more than 30 minutes to generate the whole spectrogram dataset!!!
+"""
 
 emotion_counter= [0]*8 
 emotion_list =['neutral','calm','happy','sad','angry','fear','disgust','surprise']
@@ -161,7 +166,9 @@ for i in range(len(file_path)):
 
 """# Data Preparation: Make Input Dataset for Training
 
-Using the zip file RAVDESS_P I sent you!!!!!!!!!
+Use the dataset generated in last step :)
+
+In case you don't want to generate it yourself, the generated dataset are avaliable on our github :)
 """
 
 path = r"/content/drive/MyDrive/RAVDESS_P" #  <- here to change
@@ -206,8 +213,8 @@ def one_hot(array):
 def get_the_X(file_name_list):
     arr = []
     for image in file_name_list:
-        img = Image.open("/content/drive/MyDrive/RAVDESS_P/"+image) ##########血的教训！！！！PNG是四通道图像RGBA
-        img = img.convert("RGB")
+        img = Image.open("/content/drive/MyDrive/RAVDESS_P/"+image) 
+        img = img.convert("RGB") # apologize first! The .PNG file is RGBA image, which has 4 channels. The "A" channel will distract training, so please change to .jpg.
         valid_area = img.crop((120, 40, 360, 250))
         img = np.array(valid_area)
         arr.append(img)
@@ -231,10 +238,10 @@ from keras.utils import plot_model
 from keras import regularizers
 
 model = keras.models.Sequential()
-model.add(keras.layers.Conv2D(32,1,activation = 'relu', input_shape = (210,240,3))) # kernel from 3 to 1
+model.add(keras.layers.Conv2D(32,1,activation = 'relu', input_shape = (210,240,3))) 
 model.add(keras.layers.Conv2D(16,3,padding = 'same', activation = 'relu', kernel_regularizer= regularizers.l2(0.001)))
 model.add(keras.layers.Dropout(0.2))
-model.add(keras.layers.MaxPooling2D(pool_size=(5))) #changed from 8 to 5
+model.add(keras.layers.MaxPooling2D(pool_size=(5))) 
 model.add(keras.layers.Conv2D(16,3,activation = 'relu', padding = 'same', kernel_regularizer = regularizers.l2(0.001)))
 model.add(keras.layers.Dropout(0.2))
 model.add(keras.layers.Conv2D(16,3,activation = 'relu', padding = 'same', kernel_regularizer = regularizers.l2(0.001)))
@@ -350,4 +357,23 @@ steps for make a new prediction from collected new raw data:
 3.   do the MFCC to get the image
 4.   slice the data to the size that can be predict
 5.   input into the model and get a prediction
+
+# An easy-to-use interface.
 """
+
+!pip install gradio
+
+import gradio as gr
+def api(input):
+  data, sr = librosa.load(input)
+  data = normalization(data, 72000)
+  mfcc = librosa.feature.mfcc(y = data, sr = sr, n_mfcc = 22)
+
+  #mfccs[emotion[0]].append(mfcc)
+
+  img = librosa.display.specshow(mfcc, x_axis='time')
+
+  #mfcc_img = librosa.display.specshow(mfcc, x_axis = 'time')
+  return img, mfcc
+demo = gr.Interface(fn=api, inputs="audio", outputs="image")
+demo.launch()
